@@ -2,15 +2,15 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Zasichka JS v1.3 (Compatibility Update)</title>
+    <title>Zasichka JS v1.4 (Time Format Update)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #video-section { flex: 1; background: #000; display: flex; flex-direction: column; }
         #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
         iframe, video { width: 100%; height: 100%; border: none; }
-        #sidebar { width: 380px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 15px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
-        .header-title { font-size: 1.5rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 15px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+        #sidebar { width: 400px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 15px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+        .header-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 15px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; min-height: 1.5em; }
         .settings-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
         label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
@@ -23,9 +23,9 @@
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
         #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; background: #fff; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
         th { background: #f8f9fa; position: sticky; top: 0; padding: 10px; border-bottom: 2px solid #ddd; z-index: 10; }
-        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         tr:hover { background: #f0f7ff; cursor: pointer; }
         tr.active { background: #e3f2fd; font-weight: bold; }
         tr.opened { opacity: 0.6; }
@@ -39,7 +39,7 @@
     <div id="player-container"><div id="player-placeholder" style="color:white">Завантажте відео</div></div>
     <div class="video-bar">
         <input type="text" id="video-url" placeholder="Посилання на YouTube або файл...">
-        <button onclick="handleSmartLoad()" style="background:white; color:black; min-width:100px;">ЗАВАНТАЖИТИ</button>
+        <button onclick="handleSmartLoad()" style="background:white; color:black; min-width: 100px;">ЗАВАНТАЖИТИ</button>
     </div>
 </div>
 
@@ -58,7 +58,12 @@
     </div>
     <div id="table-container">
         <table>
-            <thead><tr><th>№</th><th>Час</th><th>Дія</th></tr></thead>
+            <colgroup>
+                <col style="width: 40px;">
+                <col>
+                <col style="width: 60px;">
+            </colgroup>
+            <thead><tr><th>№</th><th>Час (H:M:S)</th><th>Дія</th></tr></thead>
             <tbody id="laps-body"></tbody>
         </table>
     </div>
@@ -69,6 +74,17 @@
     let currentPlayer = { type: null, ref: null, title: "session" };
     let laps = [];
     let selectedIndex = null;
+
+    // Функція форматування часу як у десктопній версії
+    function formatFullTime(totalSeconds) {
+        if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
+        const hrs = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = Math.floor(totalSeconds % 60);
+        const ms = Math.floor((totalSeconds % 1) * 100);
+        
+        return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+    }
 
     function handleSmartLoad(url = null) {
         const input = url || document.getElementById('video-url').value.trim();
@@ -120,12 +136,14 @@
             if (lap.opened) tr.classList.add('opened');
             if (selectedIndex === i) tr.classList.add('active');
             
-            // Захист від NaN
-            let val = parseFloat(lap.raw_time);
-            if (isNaN(val)) val = 0;
-            const corrected = (val + offset).toFixed(2);
+            const raw = parseFloat(lap.raw_time) || 0;
+            const correctedTime = raw + offset;
             
-            tr.innerHTML = `<td>${i+1}</td><td>${corrected}с</td><td><button onclick="jump(${corrected}, ${i})">▶</button></td>`;
+            tr.innerHTML = `
+                <td>${i+1}</td>
+                <td title="${correctedTime.toFixed(2)}s">${formatFullTime(correctedTime)}</td>
+                <td><button onclick="jump(${correctedTime}, ${i})">▶</button></td>
+            `;
             tr.onclick = () => { selectedIndex = i; renderTable(); };
             tbody.appendChild(tr);
         });
@@ -146,10 +164,9 @@
             laps: laps.map(l => ({ t: l.raw_time, o: l.opened }))
         };
         const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        const blob = new Blob([base64], {type: 'text/plain'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `${currentPlayer.title}.sich`;
+        a.href = URL.createObjectURL(new Blob([base64], {type: 'text/plain'}));
+        a.download = `${currentPlayer.title.replace(/[/\\?%*:|"<>]/g, '-')}.sich`;
         a.click();
     }
 
@@ -162,24 +179,20 @@
                 try {
                     const rawData = decodeURIComponent(escape(atob(ev.target.result)));
                     const data = JSON.parse(rawData);
-                    
                     if (data.video_url) handleSmartLoad(data.video_url);
                     document.getElementById('correction').value = data.cor || 0;
                     
-                    // Універсальний парсинг міток (і для десктопа, і для вебу)
                     let loadedLaps = [];
-                    let source = data.laps || data; // якщо це просто масив секунд з десктопа
-                    
+                    let source = data.laps || data;
                     if (Array.isArray(source)) {
                         loadedLaps = source.map(item => {
                             let t = (typeof item === 'object') ? item.t : item;
                             return { raw_time: parseFloat(t) || 0, opened: item.o || false };
                         });
                     }
-                    
                     laps = loadedLaps;
                     renderTable();
-                } catch (err) { alert("Не вдалося прочитати файл. Перевірте формат."); }
+                } catch (err) { alert("Помилка читання файлу."); }
             };
             reader.readAsText(e.target.files[0]);
         };
@@ -187,7 +200,7 @@
     }
 
     function deleteSelected() { if (selectedIndex !== null) { laps.splice(selectedIndex, 1); selectedIndex = null; renderTable(); } }
-    function resetAll() { if (confirm("Очистити?")) { laps = []; renderTable(); } }
+    function resetAll() { if (confirm("Очистити все?")) { laps = []; renderTable(); } }
 </script>
 </body>
 </html>
