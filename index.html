@@ -3,42 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zasichka JS v0.9 (GitHub Edition)</title>
+    <title>Zasichka Multi-Player v1.0</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; }
+        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; --twitch: #9146FF; --youtube: #FF0000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        #video-section { flex: 1; background: #000; display: flex; flex-direction: column; }
-        #player-container { width: 100%; flex-grow: 1; background: #000; }
-        #sidebar { width: 400px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 15px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
-        .timer-display { font-family: 'Consolas', monospace; font-size: 3.2rem; text-align: center; color: var(--primary); margin: 10px 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
-        .settings-grid { display: grid; grid-template-columns: 1fr 80px; gap: 10px; margin-bottom: 15px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        #video-section { flex: 1; background: #000; display: flex; flex-direction: column; position: relative; }
+        #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
+        iframe, video { width: 100%; height: 100%; border: none; }
+        
+        #sidebar { width: 380px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 15px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+        .timer-display { font-family: 'Consolas', monospace; font-size: 2.8rem; text-align: center; color: var(--primary); margin: 5px 0; padding-bottom: 10px; border-bottom: 2px solid var(--bg); }
+        
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
+        label { font-size: 11px; font-weight: bold; color: #666; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 12px; }
         button:hover { opacity: 0.8; transform: translateY(-1px); }
-        .btn-update { background: var(--accent); grid-column: span 2; }
+        
+        .btn-main { background: var(--accent); grid-column: span 2; height: 40px; }
         .btn-save { background: #ccffcc; }
         .btn-load { background: #d1e7ff; }
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
-        #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; }
+
+        #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; background: #fff; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background: #f8f9fa; position: sticky; top: 0; padding: 10px; border-bottom: 2px solid #ddd; z-index: 10; }
-        td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
         tr:hover { background: #f0f7ff; cursor: pointer; }
         tr.active { background: #e3f2fd; font-weight: bold; }
-        tr.opened td:nth-child(2) { color: #aaa; text-decoration: line-through; }
-        .video-bar { padding: 12px; background: #1a1a1a; display: flex; gap: 10px; }
-        .hotkey-hint { font-size: 11px; color: #888; text-align: center; padding-top: 10px; border-top: 1px solid #eee; margin-top: 10px; }
+        tr.opened { opacity: 0.6; }
+        tr.opened td:nth-child(2) { text-decoration: line-through; color: #888; }
+
+        .video-bar { padding: 12px; background: #1a1a1a; display: flex; gap: 10px; align-items: center; }
+        #status-dot { width: 12px; height: 12px; border-radius: 50%; background: gray; }
+        .status-recording { background: red !important; box-shadow: 0 0 8px red; }
+
+        .hint { font-size: 11px; color: #888; text-align: center; margin-top: 8px; }
     </style>
 </head>
 <body>
 
 <div id="video-section">
-    <div id="player-container"><div id="player"></div></div>
+    <div id="player-container">
+        <div id="player-placeholder" style="color: white; text-align: center;">
+            <h2>Zasichka Multi-Player</h2>
+            <p>Вставте посилання на YouTube або Twitch нижче</p>
+        </div>
+    </div>
     <div class="video-bar">
-        <input type="text" id="video-url" style="flex-grow: 1;" placeholder="Вставте посилання на YouTube...">
-        <button onclick="loadVideo()" style="background: white; min-width: 100px;">Завантажити</button>
+        <div id="status-dot"></div>
+        <input type="text" id="video-url" placeholder="YouTube, Twitch або посилання на MP4...">
+        <button onclick="handleSmartLoad()" style="background: white; color: black; min-width: 100px;">ЗАВАНТАЖИТИ</button>
     </div>
 </div>
 
@@ -47,99 +65,158 @@
     
     <div class="settings-grid">
         <div>
-            <label style="font-size: 11px; font-weight: bold;">Базовий URL:</label><br>
-            <input type="text" id="base-url" style="width: 100%;" placeholder="Генерується автоматично">
+            <label>КОРЕКЦІЯ (с):</label>
+            <input type="number" id="correction" value="0" step="0.1" onchange="renderTable()">
         </div>
         <div>
-            <label style="font-size: 11px; font-weight: bold;">Кор. (с):</label><br>
-            <input type="number" id="correction" value="0" step="0.1" style="width: 100%;">
+            <label>ГАРЯЧІ КЛАВІШІ:</label>
+            <div style="font-size: 10px; color: #444; margin-top: 5px;">F2: Старт | F3: Мітка</div>
         </div>
-        <button class="btn-update" onclick="renderTable()">ОНОВИТИ ТАБЛИЦЮ</button>
     </div>
 
     <div class="controls">
-        <button class="btn-load" onclick="importCSV()">Відкрити CSV</button>
-        <button class="btn-save" onclick="exportCSV()">Зберегти CSV</button>
-        <button class="btn-delete" onclick="deleteSelected()">Видалити</button>
-        <button class="btn-reset" onclick="resetTimer()">Скинути</button>
+        <button class="btn-main" onclick="addLap()">СТВОРИТИ МІТКУ (F3)</button>
+        <button class="btn-load" onclick="importSich()">ВІДКРИТИ .SICH</button>
+        <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ .SICH</button>
+        <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ РЯДОК</button>
+        <button class="btn-reset" onclick="resetTimer()">ПОВНИЙ СКИД</button>
     </div>
 
     <div id="table-container">
         <table>
-            <thead><tr><th>№</th><th>Секунди</th><th>Дія</th></tr></thead>
+            <thead><tr><th>№</th><th>Час</th><th>Дія</th></tr></thead>
             <tbody id="laps-body"></tbody>
         </table>
     </div>
-    <div class="hotkey-hint">F2: Старт/Стоп | F3: Мітка | Double-Click: Перейти</div>
+    <div class="hint">Подвійний клік по рядку — перехід до часу</div>
 </div>
 
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="https://player.twitch.tv/js/embed/v1.js"></script>
+
 <script>
-    let player;
+    let currentPlayer = { type: null, ref: null };
     let startTime = null;
     let elapsedBeforePause = 0;
     let running = false;
     let laps = [];
     let selectedIndex = null;
+    const APP_SIGNATURE = "ZASICHKA_LITE_JS_V1";
 
-    // Ініціалізація YouTube API
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
+    // --- ЛОГІКА ПЛЕЄРІВ ---
 
-    function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-            height: '100%', width: '100%',
-            videoId: '',
-            playerVars: { 
-                'autoplay': 1, 
-                'rel': 0, 
-                'enablejsapi': 1,
-                'origin': window.location.origin
-            }
-        });
+    function handleSmartLoad() {
+        const input = document.getElementById('video-url').value.trim();
+        if (!input) return;
+
+        const container = document.getElementById('player-container');
+        container.innerHTML = '<div id="player"></div>'; // Очищуємо контейнер
+
+        // 1. Перевірка на YouTube
+        const ytId = extractYouTubeID(input);
+        if (ytId) {
+            loadYouTube(ytId);
+            return;
+        }
+
+        // 2. Перевірка на Twitch
+        const twitchUser = extractTwitchUser(input);
+        if (twitchUser) {
+            loadTwitch(twitchUser);
+            return;
+        }
+
+        // 3. Перевірка на пряме відео (MP4)
+        if (input.match(/\.(mp4|webm|ogg)$/i) || input.startsWith('blob:')) {
+            loadDirectVideo(input);
+            return;
+        }
+
+        alert("Не вдалося розпізнати сервіс. Підтримуються: YouTube, Twitch, прямі посилання MP4.");
     }
 
-    function extractVideoID(url) {
+    function extractYouTubeID(url) {
         const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
         const match = url.match(reg);
         return match ? match[1] : (url.length === 11 ? url : null);
     }
 
-    function loadVideo() {
-        const val = document.getElementById('video-url').value.trim();
-        const id = extractVideoID(val);
-        if (id && player && player.loadVideoById) {
-            player.loadVideoById(id);
-            document.getElementById('base-url').value = `https://youtu.be/${id}?t=`;
-        } else {
-            alert("Невірне посилання YouTube.");
+    function extractTwitchUser(url) {
+        const reg = /twitch\.tv\/([a-z0-9_]+)/i;
+        const match = url.match(reg);
+        return match ? match[1] : null;
+    }
+
+    function loadYouTube(id) {
+        currentPlayer.type = 'youtube';
+        currentPlayer.ref = new YT.Player('player', {
+            height: '100%', width: '100%', videoId: id,
+            playerVars: { 'autoplay': 1, 'enablejsapi': 1 }
+        });
+    }
+
+    function loadTwitch(channel) {
+        currentPlayer.type = 'twitch';
+        currentPlayer.ref = new Twitch.Player("player", {
+            width: "100%", height: "100%", channel: channel, autoplay: true
+        });
+    }
+
+    function loadDirectVideo(url) {
+        const container = document.getElementById('player-container');
+        currentPlayer.type = 'direct';
+        container.innerHTML = `<video id="player" controls autoplay src="${url}"></video>`;
+        currentPlayer.ref = document.getElementById('player');
+    }
+
+    function seekToTime(sec) {
+        if (!currentPlayer.ref) return;
+        if (currentPlayer.type === 'youtube' && currentPlayer.ref.seekTo) {
+            currentPlayer.ref.seekTo(sec, true);
+        } else if (currentPlayer.type === 'twitch' && currentPlayer.ref.seek) {
+            currentPlayer.ref.seek(sec);
+        } else if (currentPlayer.type === 'direct') {
+            currentPlayer.ref.currentTime = sec;
         }
     }
 
-    // Логіка таймера
-    function toggleTimer() {
-        if (!running) { startTime = Date.now(); running = true; } 
-        else { elapsedBeforePause += Date.now() - startTime; running = false; }
-    }
+    // --- ЛОГІКА ТАЙМЕРА ---
 
-    function addLap() {
-        if (running || elapsedBeforePause > 0) {
-            laps.push({ raw_time: getElapsedSeconds(), opened: false });
-            renderTable();
-            localStorage.setItem('zasichka_save', JSON.stringify(laps));
+    function toggleTimer() {
+        if (!running) {
+            startTime = Date.now();
+            running = true;
+            document.getElementById('status-dot').classList.add('status-recording');
+        } else {
+            elapsedBeforePause += Date.now() - startTime;
+            running = false;
+            document.getElementById('status-dot').classList.remove('status-recording');
         }
     }
 
     function getElapsedSeconds() {
-        return (running ? elapsedBeforePause + (Date.now() - startTime) : elapsedBeforePause) / 1000;
+        const ms = running ? elapsedBeforePause + (Date.now() - startTime) : elapsedBeforePause;
+        return ms / 1000;
+    }
+
+    function addLap() {
+        const t = getElapsedSeconds();
+        if (running || t > 0) {
+            laps.push({ raw_time: t, opened: false });
+            renderTable();
+            autoSave();
+        }
     }
 
     function updateClock() {
         const sec = getElapsedSeconds();
-        const date = new Date(0);
-        date.setSeconds(sec);
-        const ms = Math.floor((sec % 1) * 100).toString().padStart(2, '0');
-        document.getElementById('clock').innerText = date.toISOString().substr(11, 8) + "." + ms;
+        const hrs = Math.floor(sec / 3600);
+        const mins = Math.floor((sec % 3600) / 60);
+        const secs = Math.floor(sec % 60);
+        const ms = Math.floor((sec % 1) * 100);
+        
+        document.getElementById('clock').innerText = 
+            `${hrs}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}.${ms.toString().padStart(2,'0')}`;
         requestAnimationFrame(updateClock);
     }
 
@@ -147,64 +224,75 @@
         const tbody = document.getElementById('laps-body');
         const offset = parseFloat(document.getElementById('correction').value) || 0;
         tbody.innerHTML = '';
+
         laps.forEach((lap, i) => {
             const tr = document.createElement('tr');
             if (lap.opened) tr.classList.add('opened');
             if (selectedIndex === i) tr.classList.add('active');
+            
             const corrected = Math.max(0, lap.raw_time + offset).toFixed(2);
-            tr.innerHTML = `<td>${i+1}</td><td>${corrected}s</td><td><button onclick="jump(${corrected}, ${i})">▶</button></td>`;
+            
+            tr.innerHTML = `
+                <td>${i+1}</td>
+                <td>${corrected}с</td>
+                <td><button onclick="jump(${corrected}, ${i})" style="padding:4px 10px;">▶</button></td>
+            `;
+            
             tr.onclick = () => { selectedIndex = i; renderTable(); };
             tr.ondblclick = () => jump(corrected, i);
             tbody.appendChild(tr);
         });
+        // Scroll to bottom
+        const container = document.getElementById('table-container');
+        container.scrollTop = container.scrollHeight;
     }
 
     function jump(sec, index) {
-        if (player && player.seekTo) {
-            player.seekTo(sec, true);
-            player.playVideo();
-            laps[index].opened = true;
-            renderTable();
-        }
+        seekToTime(sec);
+        laps[index].opened = true;
+        renderTable();
     }
 
-    // Керування
-    window.onkeydown = (e) => {
-        if (e.key === 'F2') { e.preventDefault(); toggleTimer(); }
-        if (e.key === 'F3') { e.preventDefault(); addLap(); }
-    };
+    // --- РОБОТА З ФАЙЛАМИ .SICH (Сумісність з Python версією) ---
 
-    function exportCSV() {
-        const baseUrl = document.getElementById('base-url').value || "https://youtu.be/ID?t=";
-        const offset = document.getElementById('correction').value;
-        let csv = "\uFEFF### ZASICHKA_V0.5 ###;" + baseUrl + ";" + offset + "\n№;Секунди;Посилання;Відкрито;База\n";
-        laps.forEach((l, i) => {
-            const c = Math.max(0, l.raw_time + parseFloat(offset)).toFixed(2);
-            csv += `${i+1};${c};${baseUrl}${c}s;${l.opened?'Так':'Ні'};${l.raw_time}\n`;
-        });
-        const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+    function exportSich() {
+        const data = {
+            sig: APP_SIGNATURE,
+            cor: document.getElementById('correction').value,
+            laps: laps.map(l => l.raw_time),
+            opened_indices: laps.map((l, i) => l.opened ? i : null).filter(v => v !== null)
+        };
+        
+        const jsonStr = JSON.stringify(data);
+        const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+        
+        const blob = new Blob([base64], {type: 'text/plain'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "zasichka.csv"; a.click();
+        a.download = "session.sich";
+        a.click();
     }
 
-    function importCSV() {
+    function importSich() {
         const input = document.createElement('input');
         input.type = 'file';
+        input.accept = '.sich';
         input.onchange = e => {
             const reader = new FileReader();
             reader.onload = ev => {
-                const lines = ev.target.result.split('\n');
-                if (lines[0].includes('ZASICHKA')) {
-                    const h = lines[0].split(';');
-                    document.getElementById('base-url').value = h[1] || '';
-                    document.getElementById('correction').value = h[2] || 0;
-                    laps = [];
-                    for(let i=2; i<lines.length; i++) {
-                        const c = lines[i].split(';');
-                        if(c.length >= 5) laps.push({raw_time: parseFloat(c[4]), opened: c[3]==='Так'});
-                    }
+                try {
+                    const decoded = decodeURIComponent(escape(atob(ev.target.result)));
+                    const data = JSON.parse(decoded);
+                    
+                    document.getElementById('correction').value = data.cor || 0;
+                    laps = (data.laps || []).map((t, idx) => ({
+                        raw_time: t,
+                        opened: data.opened_indices ? data.opened_indices.includes(idx) : false
+                    }));
+                    
                     renderTable();
+                } catch (err) {
+                    alert("Помилка читання .sich файлу. Можливо, файл пошкоджено.");
                 }
             };
             reader.readAsText(e.target.files[0]);
@@ -212,12 +300,50 @@
         input.click();
     }
 
-    function deleteSelected() { if(selectedIndex!==null) { laps.splice(selectedIndex,1); selectedIndex=null; renderTable(); } }
-    function resetTimer() { if(confirm("Скинути?")) { laps=[]; elapsedBeforePause=0; running=false; renderTable(); } }
+    // --- ІНШЕ ---
+
+    function deleteSelected() {
+        if (selectedIndex !== null) {
+            laps.splice(selectedIndex, 1);
+            selectedIndex = null;
+            renderTable();
+            autoSave();
+        }
+    }
+
+    function resetTimer() {
+        if (confirm("Скинути все? Це видалить усі мітки та обнулить час.")) {
+            laps = [];
+            elapsedBeforePause = 0;
+            running = false;
+            document.getElementById('status-dot').classList.remove('status-recording');
+            renderTable();
+            localStorage.removeItem('zasichka_js_autosave');
+        }
+    }
+
+    function autoSave() {
+        localStorage.setItem('zasichka_js_autosave', JSON.stringify({
+            laps: laps,
+            cor: document.getElementById('correction').value
+        }));
+    }
+
+    // Гарячі клавіші
+    window.onkeydown = (e) => {
+        if (document.activeElement.tagName === 'INPUT') return;
+        if (e.key === 'F2') { e.preventDefault(); toggleTimer(); }
+        if (e.key === 'F3') { e.preventDefault(); addLap(); }
+    };
 
     window.onload = () => {
-        const saved = localStorage.getItem('zasichka_save');
-        if(saved) { laps = JSON.parse(saved); renderTable(); }
+        const saved = localStorage.getItem('zasichka_js_autosave');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            laps = parsed.laps || [];
+            document.getElementById('correction').value = parsed.cor || 0;
+            renderTable();
+        }
         updateClock();
     };
 </script>
