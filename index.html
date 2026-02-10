@@ -2,68 +2,92 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Zasichka JS v1.4 (Time Format Update)</title>
+    <title>Zasichka JS v1.5</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; }
+        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; --mono: #ff4500; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
         #video-section { flex: 1; background: #000; display: flex; flex-direction: column; }
         #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
         iframe, video { width: 100%; height: 100%; border: none; }
-        #sidebar { width: 400px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 15px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
-        .header-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 15px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; min-height: 1.5em; }
-        .settings-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
-        label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 12px; }
+        
+        /* Вужча права панель */
+        #sidebar { width: 320px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 12px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+        
+        .header-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--bg); padding-bottom: 8px; min-height: 1.2em; }
+        .settings-grid { margin-bottom: 12px; background: #f9f9f9; padding: 8px; border-radius: 6px; }
+        label { font-size: 10px; font-weight: bold; color: #666; display: block; margin-bottom: 3px; }
+        input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; }
+        
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+        button { padding: 8px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 11px; }
         button:hover { opacity: 0.8; transform: translateY(-1px); }
-        .btn-main { background: var(--accent); grid-column: span 2; height: 50px; font-size: 16px; border: 2px solid #e6c300; }
+        
+        .btn-main { background: var(--accent); grid-column: span 2; height: 45px; font-size: 14px; border: 2px solid #e6c300; }
         .btn-save { background: #ccffcc; }
         .btn-load { background: #d1e7ff; }
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
-        #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; background: #fff; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-        th { background: #f8f9fa; position: sticky; top: 0; padding: 10px; border-bottom: 2px solid #ddd; z-index: 10; }
-        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Кнопка підтримки */
+        .btn-support { background: #000; color: white; grid-column: span 2; margin-top: 5px; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 35px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .btn-support:hover { background: #222; }
+
+        #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; background: #fff; margin-top: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+        th { background: #f8f9fa; position: sticky; top: 0; padding: 8px; border-bottom: 2px solid #ddd; z-index: 10; }
+        td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; white-space: nowrap; }
+        
+        /* Ширший стовпець для номерів */
+        .col-id { width: 55px; }
+        .col-time { width: auto; }
+        .col-act { width: 50px; }
+
         tr:hover { background: #f0f7ff; cursor: pointer; }
         tr.active { background: #e3f2fd; font-weight: bold; }
-        tr.opened { opacity: 0.6; }
+        tr.opened { opacity: 0.5; }
         tr.opened td:nth-child(2) { text-decoration: line-through; color: #888; }
-        .video-bar { padding: 12px; background: #1a1a1a; display: flex; gap: 10px; align-items: center; }
+        
+        .video-bar { padding: 10px; background: #1a1a1a; display: flex; gap: 8px; }
+        #video-url { flex-grow: 1; }
     </style>
 </head>
 <body>
 
 <div id="video-section">
-    <div id="player-container"><div id="player-placeholder" style="color:white">Завантажте відео</div></div>
+    <div id="player-container"><div style="color:white">Завантажте відео для роботи</div></div>
     <div class="video-bar">
-        <input type="text" id="video-url" placeholder="Посилання на YouTube або файл...">
-        <button onclick="handleSmartLoad()" style="background:white; color:black; min-width: 100px;">ЗАВАНТАЖИТИ</button>
+        <input type="text" id="video-url" placeholder="URL YouTube або MP4...">
+        <button onclick="handleSmartLoad()" style="background:white; color:black; min-width: 90px;">OK</button>
     </div>
 </div>
 
 <div id="sidebar">
     <div class="header-title" id="video-name-display">ЗАСІЧКА</div>
+    
     <div class="settings-grid">
-        <label>КОРЕКЦІЯ ЧАСУ (сек):</label>
+        <label>КОРЕКЦІЯ (сек):</label>
         <input type="number" id="correction" value="0" step="0.1" onchange="renderTable()">
     </div>
+
     <div class="controls">
         <button class="btn-main" onclick="addLapFromPlayer()">ПОСТАВИТИ МІТКУ</button>
         <button class="btn-load" onclick="importSich()">ВІДКРИТИ .SICH</button>
         <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ .SICH</button>
-        <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ РЯДОК</button>
-        <button class="btn-reset" onclick="resetAll()">ОЧИСТИТИ ВСЕ</button>
+        <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ</button>
+        <button class="btn-reset" onclick="resetAll()">СКИД</button>
+        <a href="https://send.monobank.ua/YOUR_ID_HERE" target="_blank" class="btn-support">❤️ ПІДТРИМАТИ ПРОЄКТ</a>
     </div>
+
     <div id="table-container">
         <table>
-            <colgroup>
-                <col style="width: 40px;">
-                <col>
-                <col style="width: 60px;">
-            </colgroup>
-            <thead><tr><th>№</th><th>Час (H:M:S)</th><th>Дія</th></tr></thead>
+            <thead>
+                <tr>
+                    <th class="col-id">№</th>
+                    <th class="col-time">Час</th>
+                    <th class="col-act">Дія</th>
+                </tr>
+            </thead>
             <tbody id="laps-body"></tbody>
         </table>
     </div>
@@ -75,15 +99,13 @@
     let laps = [];
     let selectedIndex = null;
 
-    // Функція форматування часу як у десктопній версії
-    function formatFullTime(totalSeconds) {
+    // Формат Г:ХХ:СС без часток
+    function formatSimpleTime(totalSeconds) {
         if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
         const hrs = Math.floor(totalSeconds / 3600);
         const mins = Math.floor((totalSeconds % 3600) / 60);
         const secs = Math.floor(totalSeconds % 60);
-        const ms = Math.floor((totalSeconds % 1) * 100);
-        
-        return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
     function handleSmartLoad(url = null) {
@@ -98,7 +120,7 @@
             currentPlayer.ref = new YT.Player('player', {
                 height: '100%', width: '100%', videoId: ytId,
                 events: { 'onReady': (e) => { 
-                    currentPlayer.title = e.target.getVideoData().title || "youtube_video";
+                    currentPlayer.title = e.target.getVideoData().title || "video";
                     document.getElementById('video-name-display').innerText = currentPlayer.title;
                 }}
             });
@@ -137,16 +159,18 @@
             if (selectedIndex === i) tr.classList.add('active');
             
             const raw = parseFloat(lap.raw_time) || 0;
-            const correctedTime = raw + offset;
+            const correctedTime = Math.max(0, raw + offset);
             
             tr.innerHTML = `
-                <td>${i+1}</td>
-                <td title="${correctedTime.toFixed(2)}s">${formatFullTime(correctedTime)}</td>
-                <td><button onclick="jump(${correctedTime}, ${i})">▶</button></td>
+                <td class="col-id">${i+1}</td>
+                <td class="col-time">${formatSimpleTime(correctedTime)}</td>
+                <td class="col-act"><button onclick="jump(${correctedTime}, ${i})">▶</button></td>
             `;
             tr.onclick = () => { selectedIndex = i; renderTable(); };
             tbody.appendChild(tr);
         });
+        const container = document.getElementById('table-container');
+        container.scrollTop = container.scrollHeight;
     }
 
     function jump(sec, index) {
@@ -177,22 +201,16 @@
             const reader = new FileReader();
             reader.onload = ev => {
                 try {
-                    const rawData = decodeURIComponent(escape(atob(ev.target.result)));
-                    const data = JSON.parse(rawData);
+                    const data = JSON.parse(decodeURIComponent(escape(atob(ev.target.result))));
                     if (data.video_url) handleSmartLoad(data.video_url);
                     document.getElementById('correction').value = data.cor || 0;
-                    
-                    let loadedLaps = [];
                     let source = data.laps || data;
-                    if (Array.isArray(source)) {
-                        loadedLaps = source.map(item => {
-                            let t = (typeof item === 'object') ? item.t : item;
-                            return { raw_time: parseFloat(t) || 0, opened: item.o || false };
-                        });
-                    }
-                    laps = loadedLaps;
+                    laps = Array.isArray(source) ? source.map(item => ({
+                        raw_time: parseFloat((typeof item === 'object') ? item.t : item) || 0,
+                        opened: item.o || false
+                    })) : [];
                     renderTable();
-                } catch (err) { alert("Помилка читання файлу."); }
+                } catch (err) { alert("Помилка файлу"); }
             };
             reader.readAsText(e.target.files[0]);
         };
