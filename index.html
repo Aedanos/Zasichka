@@ -2,19 +2,32 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Zasichka JS v1.5</title>
+    <title>Zasichka JS v1.7</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; --mono: #ff4500; }
+        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
         #video-section { flex: 1; background: #000; display: flex; flex-direction: column; }
         #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
         iframe, video { width: 100%; height: 100%; border: none; }
         
-        /* Вужча права панель */
         #sidebar { width: 320px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 12px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
         
-        .header-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--bg); padding-bottom: 8px; min-height: 1.2em; }
+        /* Динамічний заголовок з меншим шрифтом */
+        .header-title { 
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-align: center; 
+            margin-bottom: 10px; 
+            border-bottom: 2px solid var(--bg); 
+            padding-bottom: 8px; 
+            max-height: 3.6em; 
+            overflow-y: auto; 
+            word-wrap: break-word;
+            line-height: 1.2;
+        }
+
         .settings-grid { margin-bottom: 12px; background: #f9f9f9; padding: 8px; border-radius: 6px; }
         label { font-size: 10px; font-weight: bold; color: #666; display: block; margin-bottom: 3px; }
         input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; }
@@ -29,7 +42,6 @@
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
         
-        /* Кнопка підтримки */
         .btn-support { background: #000; color: white; grid-column: span 2; margin-top: 5px; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 35px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .btn-support:hover { background: #222; }
 
@@ -38,8 +50,7 @@
         th { background: #f8f9fa; position: sticky; top: 0; padding: 8px; border-bottom: 2px solid #ddd; z-index: 10; }
         td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; white-space: nowrap; }
         
-        /* Ширший стовпець для номерів */
-        .col-id { width: 55px; }
+        .col-id { width: 60px; font-weight: bold; }
         .col-time { width: auto; }
         .col-act { width: 50px; }
 
@@ -76,7 +87,7 @@
         <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ .SICH</button>
         <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ</button>
         <button class="btn-reset" onclick="resetAll()">ОЧИСТИТИ</button>
-        <a href="https://send.monobank.ua/jar/3RqFJQ5akg"_blank" class="btn-support">💙💛 ПІДТРИМАТИ</a>
+        <a href="https://send.monobank.ua/jar/3RqFJQ5akg" target="_blank" class="btn-support">💙💛 ПІДТРИМАТИ</a>
     </div>
 
     <div id="table-container">
@@ -95,11 +106,10 @@
 
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-    let currentPlayer = { type: null, ref: null, title: "session" };
+    let currentPlayer = { type: null, ref: null, title: "session", isPaused: false };
     let laps = [];
     let selectedIndex = null;
 
-    // Формат Г:ХХ:СС без часток
     function formatSimpleTime(totalSeconds) {
         if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
         const hrs = Math.floor(totalSeconds / 3600);
@@ -164,7 +174,7 @@
             tr.innerHTML = `
                 <td class="col-id">${i+1}</td>
                 <td class="col-time">${formatSimpleTime(correctedTime)}</td>
-                <td class="col-act"><button onclick="jump(${correctedTime}, ${i})">▶</button></td>
+                <td class="col-act"><button onclick="smartAction(${correctedTime}, ${i})">▶</button></td>
             `;
             tr.onclick = () => { selectedIndex = i; renderTable(); };
             tbody.appendChild(tr);
@@ -173,11 +183,37 @@
         container.scrollTop = container.scrollHeight;
     }
 
+    // Розумна дія: перехід або Пауза/Плей
+    function smartAction(sec, index) {
+        if (!currentPlayer.ref) return;
+
+        if (selectedIndex === index) {
+            // Якщо клікнули на вже вибраний рядок - перемикаємо Паузу
+            if (currentPlayer.type === 'youtube') {
+                const state = currentPlayer.ref.getPlayerState();
+                if (state === 1) currentPlayer.ref.pauseVideo();
+                else currentPlayer.ref.playVideo();
+            } else {
+                if (currentPlayer.ref.paused) currentPlayer.ref.play();
+                else currentPlayer.ref.pause();
+            }
+        } else {
+            // Якщо новий рядок - переходимо до часу
+            jump(sec, index);
+        }
+    }
+
     function jump(sec, index) {
         if (!currentPlayer.ref) return;
-        if (currentPlayer.type === 'youtube') currentPlayer.ref.seekTo(sec, true);
-        else currentPlayer.ref.currentTime = sec;
+        if (currentPlayer.type === 'youtube') {
+            currentPlayer.ref.seekTo(sec, true);
+            currentPlayer.ref.playVideo();
+        } else {
+            currentPlayer.ref.currentTime = sec;
+            currentPlayer.ref.play();
+        }
         laps[index].opened = true;
+        selectedIndex = index;
         renderTable();
     }
 
@@ -218,9 +254,7 @@
     }
 
     function deleteSelected() { if (selectedIndex !== null) { laps.splice(selectedIndex, 1); selectedIndex = null; renderTable(); } }
-    function resetAll() { if (confirm("Очистити все?")) { laps = []; renderTable(); } }
+    function resetAll() { if (confirm("Очистити все?")) { laps = []; selectedIndex = null; renderTable(); } }
 </script>
 </body>
 </html>
-
-
