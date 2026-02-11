@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Zasichka JS v1.7</title>
+    <title>Zasichka JS v1.8</title>
     <style>
         :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
@@ -11,65 +11,49 @@
         #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
         iframe, video { width: 100%; height: 100%; border: none; }
         
-        #sidebar { width: 320px; background: white; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 12px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+        /* Панель 300px */
+        #sidebar { width: 300px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
         
-        /* Динамічний заголовок з меншим шрифтом */
-        .header-title { 
-            font-size: 0.7rem; 
-            font-weight: bold; 
-            color: var(--primary); 
-            text-align: center; 
-            margin-bottom: 10px; 
-            border-bottom: 2px solid var(--bg); 
-            padding-bottom: 8px; 
-            max-height: 5.6em; 
-            overflow-y: auto; 
-            word-wrap: break-word;
-            line-height: 1.2;
-        }
-
-        .settings-grid { margin-bottom: 12px; background: #f9f9f9; padding: 8px; border-radius: 6px; }
-        label { font-size: 10px; font-weight: bold; color: #666; display: block; margin-bottom: 3px; }
-        input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; }
+        .header-title { font-size: 0.85rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; max-height: 3em; overflow-y: auto; line-height: 1.2; }
+        .settings-grid { margin-bottom: 8px; background: #f9f9f9; padding: 6px; border-radius: 4px; }
+        label { font-size: 9px; font-weight: bold; color: #666; display: block; margin-bottom: 2px; }
+        input[type="number"], input[type="text"] { padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; width: 100%; box-sizing: border-box; }
         
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
-        button { padding: 8px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 11px; }
-        button:hover { opacity: 0.8; transform: translateY(-1px); }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        button { padding: 6px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; font-size: 10px; }
         
-        .btn-main { background: var(--accent); grid-column: span 2; height: 45px; font-size: 14px; border: 2px solid #e6c300; }
+        .btn-main { background: var(--accent); grid-column: span 2; height: 40px; font-size: 12px; border-bottom: 3px solid #e6c300; }
         .btn-save { background: #ccffcc; }
         .btn-load { background: #d1e7ff; }
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
-        
-        .btn-support { background: #000; color: white; grid-column: span 2; margin-top: 5px; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 35px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .btn-support:hover { background: #222; }
+        .btn-support { background: #000; color: white; grid-column: span 2; margin-top: 3px; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 4px; font-size: 10px; font-weight: bold; }
 
-        #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; background: #fff; margin-top: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-        th { background: #f8f9fa; position: sticky; top: 0; padding: 8px; border-bottom: 2px solid #ddd; z-index: 10; }
-        td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; white-space: nowrap; }
+        #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+        th { background: #f8f9fa; position: sticky; top: 0; padding: 5px; border-bottom: 1px solid #ddd; z-index: 10; font-size: 9px; }
+        td { padding: 4px; border-bottom: 1px solid #eee; text-align: center; }
         
-        .col-id { width: 60px; font-weight: bold; }
-        .col-time { width: auto; }
-        .col-act { width: 50px; }
+        .col-id { width: 30px; }
+        .col-time { width: 55px; font-family: monospace; }
+        .col-desc { width: auto; }
+        .col-act { width: 35px; }
 
-        tr:hover { background: #f0f7ff; cursor: pointer; }
-        tr.active { background: #e3f2fd; font-weight: bold; }
-        tr.opened { opacity: 0.5; }
-        tr.opened td:nth-child(2) { text-decoration: line-through; color: #888; }
-        
-        .video-bar { padding: 10px; background: #1a1a1a; display: flex; gap: 8px; }
-        #video-url { flex-grow: 1; }
+        .note-input { border: none; background: transparent; font-size: 11px; width: 100%; text-align: left; }
+        .note-input:focus { background: #fffde7; outline: 1px solid #ffd700; }
+
+        tr.active { background: #e3f2fd !important; }
+        tr.opened { opacity: 0.6; }
+        .video-bar { padding: 8px; background: #1a1a1a; display: flex; gap: 5px; }
     </style>
 </head>
 <body>
 
 <div id="video-section">
-    <div id="player-container"><div style="color:white">Завантажте відео для роботи</div></div>
+    <div id="player-container"><div style="color:white; font-size: 12px;">Вставте посилання та натисніть OK</div></div>
     <div class="video-bar">
-        <input type="text" id="video-url" placeholder="URL YouTube або MP4...">
-        <button onclick="handleSmartLoad()" style="background:white; color:black; min-width: 90px;">OK</button>
+        <input type="text" id="video-url" placeholder="URL відео..." style="flex-grow:1; padding: 5px;">
+        <button onclick="handleSmartLoad()" style="background:white; min-width: 50px;">OK</button>
     </div>
 </div>
 
@@ -83,10 +67,10 @@
 
     <div class="controls">
         <button class="btn-main" onclick="addLapFromPlayer()">ПОСТАВИТИ МІТКУ</button>
-        <button class="btn-load" onclick="importSich()">ВІДКРИТИ .SICH</button>
-        <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ .SICH</button>
+        <button class="btn-load" onclick="importSich()">ВІДКРИТИ</button>
+        <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ</button>
         <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ</button>
-        <button class="btn-reset" onclick="resetAll()">ОЧИСТИТИ</button>
+        <button class="btn-reset" onclick="resetAll()">СКИД</button>
         <a href="https://send.monobank.ua/jar/3RqFJQ5akg" target="_blank" class="btn-support">💙💛 ПІДТРИМАТИ</a>
     </div>
 
@@ -96,7 +80,8 @@
                 <tr>
                     <th class="col-id">№</th>
                     <th class="col-time">Час</th>
-                    <th class="col-act">Дія</th>
+                    <th class="col-desc">Опис</th>
+                    <th class="col-act"></th>
                 </tr>
             </thead>
             <tbody id="laps-body"></tbody>
@@ -106,12 +91,11 @@
 
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-    let currentPlayer = { type: null, ref: null, title: "session", isPaused: false };
+    let currentPlayer = { type: null, ref: null, title: "session" };
     let laps = [];
     let selectedIndex = null;
 
     function formatSimpleTime(totalSeconds) {
-        if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
         const hrs = Math.floor(totalSeconds / 3600);
         const mins = Math.floor((totalSeconds % 3600) / 60);
         const secs = Math.floor(totalSeconds % 60);
@@ -144,18 +128,17 @@
     }
 
     function extractYouTubeID(url) {
-        const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const match = url.match(reg);
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
         return match ? match[1] : (url.length === 11 ? url : null);
     }
 
     function addLapFromPlayer() {
         if (!currentPlayer.ref) return;
         let time = 0;
-        try {
-            time = (currentPlayer.type === 'youtube') ? currentPlayer.ref.getCurrentTime() : currentPlayer.ref.currentTime;
-        } catch(e) { time = 0; }
-        laps.push({ raw_time: parseFloat(time) || 0, opened: false });
+        if (currentPlayer.type === 'youtube') time = currentPlayer.ref.getCurrentTime();
+        else time = currentPlayer.ref.currentTime;
+        
+        laps.push({ raw_time: parseFloat(time) || 0, opened: false, note: "" });
         renderTable();
     }
 
@@ -168,64 +151,58 @@
             if (lap.opened) tr.classList.add('opened');
             if (selectedIndex === i) tr.classList.add('active');
             
-            const raw = parseFloat(lap.raw_time) || 0;
-            const correctedTime = Math.max(0, raw + offset);
+            const correctedTime = Math.max(0, lap.raw_time + offset);
             
             tr.innerHTML = `
                 <td class="col-id">${i+1}</td>
                 <td class="col-time">${formatSimpleTime(correctedTime)}</td>
+                <td class="col-desc"><input type="text" class="note-input" value="${lap.note || ''}" onchange="updateNote(${i}, this.value)" placeholder="..."></td>
                 <td class="col-act"><button onclick="smartAction(${correctedTime}, ${i})">▶</button></td>
             `;
-            tr.onclick = () => { selectedIndex = i; renderTable(); };
+            tr.onclick = (e) => { if(e.target.tagName !== 'INPUT') { selectedIndex = i; renderTable(); } };
             tbody.appendChild(tr);
         });
-        const container = document.getElementById('table-container');
-        container.scrollTop = container.scrollHeight;
     }
 
-    // Розумна дія: перехід або Пауза/Плей
+    function updateNote(index, val) { laps[index].note = val; }
+
     function smartAction(sec, index) {
         if (!currentPlayer.ref) return;
 
+        // Якщо клікаємо на той самий рядок — Пауза/Плей
         if (selectedIndex === index) {
-            // Якщо клікнули на вже вибраний рядок - перемикаємо Паузу
             if (currentPlayer.type === 'youtube') {
                 const state = currentPlayer.ref.getPlayerState();
-                if (state === 1) currentPlayer.ref.pauseVideo();
+                if (state === 1) currentPlayer.ref.pauseVideo(); // 1 = Playing
                 else currentPlayer.ref.playVideo();
             } else {
                 if (currentPlayer.ref.paused) currentPlayer.ref.play();
                 else currentPlayer.ref.pause();
             }
         } else {
-            // Якщо новий рядок - переходимо до часу
-            jump(sec, index);
+            // Перехід до нового часу
+            if (currentPlayer.type === 'youtube') {
+                currentPlayer.ref.seekTo(sec, true);
+                currentPlayer.ref.playVideo();
+            } else {
+                currentPlayer.ref.currentTime = sec;
+                currentPlayer.ref.play();
+            }
+            laps[index].opened = true;
+            selectedIndex = index;
+            renderTable();
         }
-    }
-
-    function jump(sec, index) {
-        if (!currentPlayer.ref) return;
-        if (currentPlayer.type === 'youtube') {
-            currentPlayer.ref.seekTo(sec, true);
-            currentPlayer.ref.playVideo();
-        } else {
-            currentPlayer.ref.currentTime = sec;
-            currentPlayer.ref.play();
-        }
-        laps[index].opened = true;
-        selectedIndex = index;
-        renderTable();
     }
 
     function exportSich() {
         const data = {
             video_url: document.getElementById('video-url').value,
             cor: document.getElementById('correction').value,
-            laps: laps.map(l => ({ t: l.raw_time, o: l.opened }))
+            laps: laps.map(l => ({ t: l.raw_time, o: l.opened, n: l.note }))
         };
-        const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        const blob = new Blob([btoa(unescape(encodeURIComponent(JSON.stringify(data))))], {type: 'text/plain'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([base64], {type: 'text/plain'}));
+        a.href = URL.createObjectURL(blob);
         a.download = `${currentPlayer.title.replace(/[/\\?%*:|"<>]/g, '-')}.sich`;
         a.click();
     }
@@ -240,13 +217,14 @@
                     const data = JSON.parse(decodeURIComponent(escape(atob(ev.target.result))));
                     if (data.video_url) handleSmartLoad(data.video_url);
                     document.getElementById('correction').value = data.cor || 0;
-                    let source = data.laps || data;
-                    laps = Array.isArray(source) ? source.map(item => ({
-                        raw_time: parseFloat((typeof item === 'object') ? item.t : item) || 0,
-                        opened: item.o || false
+                    let src = data.laps || data;
+                    laps = Array.isArray(src) ? src.map(it => ({
+                        raw_time: parseFloat(it.t || it) || 0,
+                        opened: it.o || false,
+                        note: it.n || ""
                     })) : [];
                     renderTable();
-                } catch (err) { alert("Помилка файлу"); }
+                } catch (err) { alert("Помилка"); }
             };
             reader.readAsText(e.target.files[0]);
         };
@@ -254,8 +232,7 @@
     }
 
     function deleteSelected() { if (selectedIndex !== null) { laps.splice(selectedIndex, 1); selectedIndex = null; renderTable(); } }
-    function resetAll() { if (confirm("Очистити все?")) { laps = []; selectedIndex = null; renderTable(); } }
+    function resetAll() { if (confirm("Скинути все?")) { laps = []; renderTable(); } }
 </script>
 </body>
 </html>
-
