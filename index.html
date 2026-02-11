@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Засічка v1.0</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; }
+        :root { --primary: #2c3e50; --accent: #ffd700; --bg: #f4f7f6; --discord: #5865F2; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
         #video-section { flex: 1; background: #000; display: flex; flex-direction: column; }
@@ -26,8 +26,15 @@
         .btn-load { background: #d1e7ff; }
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
-        .btn-pc { background: #333; color: white; grid-column: span 2; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 25px; border-radius: 4px; font-size: 9px; margin-top: 5px; }
-        .btn-support { background: #000; color: white; grid-column: span 2; margin-top: 3px; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        
+        .btn-pc, .btn-discord, .btn-support { 
+            grid-column: span 2; text-decoration: none; display: flex; align-items: center; 
+            justify-content: center; border-radius: 4px; font-size: 10px; font-weight: bold; 
+        }
+        
+        .btn-pc { background: #333; color: white; height: 25px; margin-top: 5px; font-size: 9px; }
+        .btn-discord { background: var(--discord); color: white; height: 30px; margin-top: 2px; }
+        .btn-support { background: #000; color: white; margin-top: 2px; height: 30px; }
 
         #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; margin-top: 5px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
@@ -71,6 +78,7 @@
         <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ</button>
         <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ</button>
         <button class="btn-reset" onclick="resetAll()">ОЧИСТИТИ</button>
+        
         <a href="https://github.com/Aedanos/Zasichka/releases/download/Zasichka/Zasichka_by_Aedan.v1.0.zip" class="btn-pc">🖥️ ЗАВАНТАЖИТИ ДЛЯ ПК</a>
         <a href="https://discord.gg/YsvV9mK4Cy" target="_blank" class="btn-discord">💬 DISCORD КАНАЛ</a>
         <a href="https://send.monobank.ua/jar/3RqFJQ5akg" target="_blank" class="btn-support">💙💛 ПІДТРИМАТИ</a>
@@ -201,7 +209,6 @@
             laps: laps.map(l => ({ t: l.raw_time, o: l.opened, n: l.note }))
         };
         const jsonStr = JSON.stringify(data);
-        // Використовуємо UTF-8 кодування для збереження кирилиці
         const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
         const blob = new Blob([base64], {type: 'text/plain'});
         const a = document.createElement('a');
@@ -219,11 +226,9 @@
             const reader = new FileReader();
             reader.onload = ev => {
                 try {
-                    // НАДІЙНЕ ДЕКОДУВАННЯ КИРИЛИЦІ
                     const base64 = ev.target.result.trim();
                     const decoded = decodeURIComponent(escape(atob(base64)));
                     const data = JSON.parse(decoded);
-                    
                     if (data.video_url) handleSmartLoad(data.video_url);
                     document.getElementById('correction').value = data.cor || 0;
                     let src = data.laps || data;
@@ -233,10 +238,7 @@
                         note: it.n || ""
                     })) : [];
                     renderTable();
-                } catch (err) { 
-                    alert("Помилка формату файлу або кодування"); 
-                    console.error(err);
-                }
+                } catch (err) { alert("Помилка формату"); }
             };
             reader.readAsText(file);
         };
