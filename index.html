@@ -11,7 +11,6 @@
         #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
         iframe, video { width: 100%; height: 100%; border: none; }
         
-        
         #sidebar { width: 300px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
         
         .header-title { font-size: 0.85rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; max-height: 3em; overflow-y: auto; line-height: 1.2; }
@@ -27,6 +26,7 @@
         .btn-load { background: #d1e7ff; }
         .btn-reset { background: #eee; }
         .btn-delete { background: #ffcccc; }
+        .btn-pc { background: #333; color: white; grid-column: span 2; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 25px; border-radius: 4px; font-size: 9px; margin-top: 5px; }
         .btn-support { background: #000; color: white; grid-column: span 2; margin-top: 3px; text-decoration: none; display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 4px; font-size: 10px; font-weight: bold; }
 
         #table-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; margin-top: 5px; }
@@ -71,6 +71,8 @@
         <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ</button>
         <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ</button>
         <button class="btn-reset" onclick="resetAll()">ОЧИСТИТИ</button>
+        <a href="https://github.com/Aedanos/Zasichka/releases/download/Zasichka/Zasichka_by_Aedan.v1.0.zip" class="btn-pc">🖥️ ЗАВАНТАЖИТИ ДЛЯ ПК</a>
+        <a href="https://discord.gg/YsvV9mK4Cy" target="_blank" class="btn-discord">💬 DISCORD КАНАЛ</a>
         <a href="https://send.monobank.ua/jar/3RqFJQ5akg" target="_blank" class="btn-support">💙💛 ПІДТРИМАТИ</a>
     </div>
 
@@ -113,6 +115,7 @@
             currentPlayer.type = 'youtube';
             currentPlayer.ref = new YT.Player('player', {
                 height: '100%', width: '100%', videoId: ytId,
+                playerVars: { 'autoplay': 1, 'rel': 0 },
                 events: { 'onReady': (e) => { 
                     currentPlayer.title = e.target.getVideoData().title || "video";
                     document.getElementById('video-name-display').innerText = currentPlayer.title;
@@ -135,8 +138,10 @@
     function addLapFromPlayer() {
         if (!currentPlayer.ref) return;
         let time = 0;
-        if (currentPlayer.type === 'youtube') time = currentPlayer.ref.getCurrentTime();
-        else time = currentPlayer.ref.currentTime;
+        try {
+            if (currentPlayer.type === 'youtube') time = currentPlayer.ref.getCurrentTime();
+            else time = currentPlayer.ref.currentTime;
+        } catch(e) { return; }
         
         laps.push({ raw_time: parseFloat(time) || 0, opened: false, note: "" });
         renderTable();
@@ -150,16 +155,14 @@
             const tr = document.createElement('tr');
             if (lap.opened) tr.classList.add('opened');
             if (selectedIndex === i) tr.classList.add('active');
-            
             const correctedTime = Math.max(0, lap.raw_time + offset);
-            
             tr.innerHTML = `
                 <td class="col-id">${i+1}</td>
                 <td class="col-time">${formatSimpleTime(correctedTime)}</td>
                 <td class="col-desc"><input type="text" class="note-input" value="${lap.note || ''}" onchange="updateNote(${i}, this.value)" placeholder="..."></td>
                 <td class="col-act"><button onclick="smartAction(${correctedTime}, ${i})">▶</button></td>
             `;
-            tr.onclick = (e) => { if(e.target.tagName !== 'INPUT') { selectedIndex = i; renderTable(); } };
+            tr.onclick = (e) => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') { selectedIndex = i; renderTable(); } };
             tbody.appendChild(tr);
         });
     }
@@ -168,19 +171,16 @@
 
     function smartAction(sec, index) {
         if (!currentPlayer.ref) return;
-
-        
         if (selectedIndex === index) {
             if (currentPlayer.type === 'youtube') {
                 const state = currentPlayer.ref.getPlayerState();
-                if (state === 1) currentPlayer.ref.pauseVideo(); // 1 = Playing
+                if (state === 1) currentPlayer.ref.pauseVideo();
                 else currentPlayer.ref.playVideo();
             } else {
                 if (currentPlayer.ref.paused) currentPlayer.ref.play();
                 else currentPlayer.ref.pause();
             }
         } else {
-           
             if (currentPlayer.type === 'youtube') {
                 currentPlayer.ref.seekTo(sec, true);
                 currentPlayer.ref.playVideo();
@@ -200,21 +200,30 @@
             cor: document.getElementById('correction').value,
             laps: laps.map(l => ({ t: l.raw_time, o: l.opened, n: l.note }))
         };
-        const blob = new Blob([btoa(unescape(encodeURIComponent(JSON.stringify(data))))], {type: 'text/plain'});
+        const jsonStr = JSON.stringify(data);
+        // Використовуємо UTF-8 кодування для збереження кирилиці
+        const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+        const blob = new Blob([base64], {type: 'text/plain'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `${currentPlayer.title.replace(/[/\\?%*:|"<>]/g, '-')}.sich`;
+        a.download = `${(currentPlayer.title || 'session').replace(/[/\\?%*:|"<>]/g, '-')}.sich`;
         a.click();
     }
 
     function importSich() {
         const input = document.createElement('input');
         input.type = 'file';
+        input.accept = '.sich';
         input.onchange = e => {
+            const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = ev => {
                 try {
-                    const data = JSON.parse(decodeURIComponent(escape(atob(ev.target.result))));
+                    // НАДІЙНЕ ДЕКОДУВАННЯ КИРИЛИЦІ
+                    const base64 = ev.target.result.trim();
+                    const decoded = decodeURIComponent(escape(atob(base64)));
+                    const data = JSON.parse(decoded);
+                    
                     if (data.video_url) handleSmartLoad(data.video_url);
                     document.getElementById('correction').value = data.cor || 0;
                     let src = data.laps || data;
@@ -224,17 +233,18 @@
                         note: it.n || ""
                     })) : [];
                     renderTable();
-                } catch (err) { alert("Помилка"); }
+                } catch (err) { 
+                    alert("Помилка формату файлу або кодування"); 
+                    console.error(err);
+                }
             };
-            reader.readAsText(e.target.files[0]);
+            reader.readAsText(file);
         };
         input.click();
     }
 
     function deleteSelected() { if (selectedIndex !== null) { laps.splice(selectedIndex, 1); selectedIndex = null; renderTable(); } }
-    function resetAll() { if (confirm("Очистити все?")) { laps = []; renderTable(); } }
+    function resetAll() { if (confirm("Очистити все?")) { laps = []; document.getElementById('video-name-display').innerText = "ЗАСІЧКА"; renderTable(); } }
 </script>
 </body>
 </html>
-
-
