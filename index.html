@@ -70,7 +70,7 @@
         <button class="btn-load" onclick="importSich()">ВІДКРИТИ</button>
         <button class="btn-save" onclick="exportSich()">ЗБЕРЕГТИ</button>
         <button class="btn-delete" onclick="deleteSelected()">ВИДАЛИТИ</button>
-        <button class="btn-reset" onclick="resetAll()">СКИД</button>
+        <button class="btn-reset" onclick="resetAll()">ОЧИСТИТИ</button>
         <a href="https://send.monobank.ua/jar/3RqFJQ5akg" target="_blank" class="btn-support">💙💛 ПІДТРИМАТИ</a>
     </div>
 
@@ -232,7 +232,8 @@
     }
 
     function deleteSelected() { if (selectedIndex !== null) { laps.splice(selectedIndex, 1); selectedIndex = null; renderTable(); } }
-    function resetAll() { if (confirm("Скинути все?")) { laps = []; renderTable(); } }
+    function resetAll() { if (confirm("Очистити все?")) { laps = []; renderTable(); } }
 </script>
 </body>
 </html>
+
