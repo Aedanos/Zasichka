@@ -59,9 +59,12 @@
 <div id="video-section">
     <div id="player-container"><div style="color:white; font-size: 12px;">Вставте посилання та натисніть OK</div></div>
     <div class="video-bar">
-        <input type="text" id="video-url" placeholder="URL відео..." style="flex-grow:1; padding: 5px;">
-        <button onclick="handleSmartLoad()" style="background:white; min-width: 50px;">OK</button>
-    </div>
+    <input type="file" id="local-file-input" accept="video/*" style="display: none;" onchange="handleLocalFile(this)">
+    <button onclick="document.getElementById('local-file-input').click()" style="background:#eee; margin-right:5px; cursor:pointer;" title="Відкрити локальний файл">📂</button>
+    
+    <input type="text" id="video-url" placeholder="URL відео..." style="flex-grow:1; padding: 5px;">
+    <button onclick="handleSmartLoad()" style="background:white; min-width: 50px;">OK</button>
+</div>
 </div>
 
 <div id="sidebar">
@@ -111,7 +114,31 @@
         const secs = Math.floor(totalSeconds % 60);
         return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
+    
+    function handleLocalFile(inputElement) {
+        const file = inputElement.files[0];
+        if (!file) return;
 
+        // Створюємо безпечне посилання на локальний файл
+        const fileURL = URL.createObjectURL(file);
+
+        // Встановлюємо тип плеєра як 'direct' (так само як для mp4 посилань)
+        currentPlayer.type = 'direct';
+        currentPlayer.title = file.name;
+        
+        // Оновлюємо заголовок
+        document.getElementById('video-name-display').innerText = currentPlayer.title;
+        
+        // Створюємо HTML5 відеоплеєр
+        document.getElementById('player-container').innerHTML = 
+            `<video id="player" controls autoplay src="${fileURL}" style="width:100%;height:100%"></video>`;
+        
+        currentPlayer.ref = document.getElementById('player');
+        
+        // Очищаємо інпут, щоб можна було вибрати той самий файл повторно, якщо треба
+        inputElement.value = '';
+    }
+    
     function handleSmartLoad(url = null) {
         const input = url || document.getElementById('video-url').value.trim();
         if (!input) return;
@@ -250,4 +277,5 @@
 </script>
 </body>
 </html>
+
 
