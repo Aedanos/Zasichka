@@ -8,7 +8,8 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
         #video-section { flex: 1; background: #000; display: flex; flex-direction: column; }
-        #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; }
+        #player-container { width: 100%; flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        video#player { max-width: 100%; max-height: 100%; width: auto;  height: auto;  object-fit: contain; }
         iframe, video { width: 100%; height: 100%; border: none; }
         
         #sidebar { width: 300px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
@@ -118,24 +119,19 @@
     function handleLocalFile(inputElement) {
         const file = inputElement.files[0];
         if (!file) return;
-
-        // Створюємо безпечне посилання на локальний файл
+      
         const fileURL = URL.createObjectURL(file);
 
-        // Встановлюємо тип плеєра як 'direct' (так само як для mp4 посилань)
         currentPlayer.type = 'direct';
         currentPlayer.title = file.name;
         
-        // Оновлюємо заголовок
         document.getElementById('video-name-display').innerText = currentPlayer.title;
         
-        // Створюємо HTML5 відеоплеєр
         document.getElementById('player-container').innerHTML = 
-            `<video id="player" controls autoplay src="${fileURL}" style="width:100%;height:100%"></video>`;
+    `<video id="player" controls autoplay src="${fileURL}"></video>`;
         
         currentPlayer.ref = document.getElementById('player');
         
-        // Очищаємо інпут, щоб можна було вибрати той самий файл повторно, якщо треба
         inputElement.value = '';
     }
     
@@ -277,5 +273,6 @@
 </script>
 </body>
 </html>
+
 
 
